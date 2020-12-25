@@ -31,7 +31,17 @@ public class CloudFileService {
         CloudFile cloudFile = new CloudFile();
         cloudFile.setFilename(file.getOriginalFilename());
         cloudFile.setContentType(file.getContentType());
-        cloudFile.setFilesize(String.format("%.3f", file.getSize() / 1024.0) + " KB");
+        long filesize = file.getSize();
+        if (filesize >= 1024 * 1024 * 1024) {
+            cloudFile.setFilesize(String.format("%.3f", filesize / Math.pow(1024, 3)) + " GB");
+        } else if (filesize >= 1024 * 1024) {
+            cloudFile.setFilesize(String.format("%.3f", filesize / Math.pow(1024, 2)) + " MB");
+        } else if (filesize >= 1024) {
+            cloudFile.setFilesize(String.format("%.3f", filesize / 1024.0) + " KB");
+        } else {
+            cloudFile.setFilesize(filesize + " Bytes");
+        }
+
         cloudFile.setUserId(userId);
         cloudFile.setFileData(file.getInputStream());
         return this.fileMapper.insertFile(cloudFile);

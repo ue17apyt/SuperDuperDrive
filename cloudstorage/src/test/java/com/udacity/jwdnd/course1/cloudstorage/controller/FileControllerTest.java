@@ -21,10 +21,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.udacity.jwdnd.course1.cloudstorage.controller.AccessControllerTest.TIMEOUT_IN_SECOND;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -39,10 +43,13 @@ public class FileControllerTest {
     public static final String UPLOAD_FILE_PATH =
             System.getProperty("user.home") + File.separator + "Downloads" + File.separator + FILENAME;
     public static final String DOWNLOAD_FILE_PATH = System.getProperty("user.dir") + File.separator + FILENAME;
-    public static final long SLEEP_IN_MILLISECONDS = 200;
+    public static final long AWAIT_IN_MILLISECONDS = 200;
+
     private final Logger logger = LoggerFactory.getLogger(FileControllerTest.class);
+
     @LocalServerPort
     private int port;
+
     private WebDriver driver;
     private WebDriverWait driverWait;
     private JavascriptExecutor executor;
@@ -134,12 +141,11 @@ public class FileControllerTest {
         // Click the view button
         TestUtils.clickWebElement(this.driver, this.driverWait, this.executor, "fileView");
 
-        // Leave some time for downloading the file
-        try {
-            Thread.sleep(SLEEP_IN_MILLISECONDS);
-        } catch (InterruptedException interruptedException) {
-            this.logger.error(interruptedException.getMessage());
-        }
+        // Wait some time for downloading the file
+        Path downloadedFilePath = Paths.get(System.getProperty("user.dir"), FILENAME);
+        await().atMost(AWAIT_IN_MILLISECONDS, MILLISECONDS).ignoreExceptions().until(
+                () -> downloadedFilePath.toFile().exists()
+        );
 
         // Check whether the file exists
         File downloadedFile = new File(DOWNLOAD_FILE_PATH);
